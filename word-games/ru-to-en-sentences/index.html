@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>eng-sent</title>
+  <title>ru-to-en-sentences</title>
   <style>
 html {
   font-family: sans-serif;
@@ -80,6 +80,7 @@ class Game extends React.Component {
         <Score score={score} large={false} />
         <Puzzle key={currentSentenceIndex}
           sentence={sentences[currentSentenceIndex]}
+          onSkip={this.handleNext}
           onNext={this.handleNext}
           onMiss={this.handleMiss} />
       </div>
@@ -109,6 +110,7 @@ class Puzzle extends React.Component {
       availableWords
     }
     this.handleNextClick = this.handleNextClick.bind(this);
+    this.handleSkipClick = this.handleSkipClick.bind(this);
   }
   handleWordClick(word) {
     if (this.state.expectedWords[this.state.nextWordIndex] === word) {
@@ -123,6 +125,9 @@ class Puzzle extends React.Component {
       this.props.onNext();
     }
   }
+  handleSkipClick() {
+    this.props.onSkip();
+  }
   render() {
     const {en, ru} = this.props.sentence;
     const {nextWordIndex, expectedWords, availableWords} = this.state;
@@ -131,7 +136,7 @@ class Puzzle extends React.Component {
 
     return (
       <div>
-        <p className="sentence" title={en}>{ru}</p>
+        <p className="sentence" title={en}>{ru} <button onClick={this.handleSkipClick}>skip</button></p>
         <div className="words">
         {availableWords.map(
           (w, i) => {
