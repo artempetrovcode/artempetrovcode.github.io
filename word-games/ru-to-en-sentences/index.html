@@ -13,7 +13,10 @@ html {
   margin: 0 auto;
 }
 .word {
-  margin: 3px;
+    margin: 0.25em;
+    font-size: 1em;
+    padding: 0.5em;
+    border: 1px solid;
 }
 .sentence {
   text-align: center;
@@ -32,111 +35,23 @@ html {
 <body>
   <div id="root"></div>
   <script type="text/babel">
-const sentences = [
-  {
-    en: 'we decided to become profitable at any cost',
-    ru: 'мы решили стать прибыльными любой ценой',
-  },
-  {
-    en: 'google unveiled two audio recordings',
-    ru: 'google представил две аудиозаписи',
-  },
-  {
-    en: 'Thomas Edison walked into the offices of Scientific American magazine with his latest invention',
-    ru: 'Томас Эдисон вошел в офис журнала Scientific American со своим последним изобретением',
-  },
-  {
-    en: 'there is no real way to separate humanity from its technology',
-    ru: 'нет реального способа отделить человечество от его технологий',
-  },
-  {
-    en: 'humans are remarkable for their innovation',
-    ru: 'люди замечательны своими инновациями',
-  },
-  {
-    en: 'are robots already self-conscious',
-    ru: 'роботы уже осознают тебя?',
-  },
-  {
-    en: 'Pam tried various ways to motivate this person',
-    ru: 'Пэм пробовала разные способы мотивировать этого человека',
-  },
-  {
-    en: 'let\'s try to figure out the other person\'s good points',
-    ru: 'давайте попробуем выяснить хорошие стороны другого человека',
-  },
-  {
-    en: 'tomorrow you may want to persuade somebody to do something',
-    ru: 'завтра вы можете захотеть убедить кого-то сделать что-то',
-  },
-  {
-    en: 'your company has been one of our good customers for fourteen years',
-    ru: 'ваша компания была одним из наших хороших клиентов в течение четырнадцати лет',
-  },
-  {
-    en: 'my ten years of bank experience should be of interest to a rapidly growing bank like yours',
-    ru: 'мой десятилетний опыт работы в банке должен интересовать такой быстрорастущий банк, как ваш',
-  },
-  {
-    en: 'i will be relocating to Phoenix in May and I am sure I can contribute to your growth and profit',
-    ru: 'я перееду в Phoenix в мае, и я уверен, что могу внести свой вклад в ваш рост и прибыль',
-  },
-  {
-    en: 'do you think Mrs. Anderson received any response from that letter',
-    ru: 'как вы думаете, миссис Андерсон получила ответ на это письмо?',
-  },
-  {
-    en: 'let the other person feel that the idea is his or hers',
-    ru: 'пусть другой человек почувствует, что идея принадлежит ему или ей',
-  },
-  {
-    en: 'talk about your own mistakes before criticizing the other person',
-    ru: 'расскажите о своих ошибках, прежде чем критиковать другого человека',
-  },
-  {
-    en: 'when dealing with people, let us remember we are not dealing with creatures of logic',
-    ru: 'имея дело с людьми, давайте помнить, что мы не имеем дело с существами логичными',
-  },
-  {
-    en: 'the only way on earth to influence other people is to talk about what they want and show them how to get it',
-    ru: 'единственный способ на земле повлиять на других людей - это говорить о том, чего они хотят, и показывать им, как этого добиться.',
-  },
-  {
-    en: 'adversity reveals genius, prosperity conceals it',
-    ru: 'несчастье раскрывает гениальность, процветание скрывает',
-  },
-  {
-    en: 'I would rather be a superb meteor, every atom of me in magnificent glow, than a sleepy and permanent planet',
-    ru: 'Я предпочел бы быть превосходным метеором, каждый атом меня в великолепном сиянии, чем сонной и постоянной планетой',
-  },
-  {
-    en: 'don’t judge each day by the harvest you reap but by the seeds that you plant',
-    ru: 'не суди каждый день по урожаю, который ты пожинаешь, но по семенам, которые ты сажаешь',
-  },
-  {
-    en: 'the secret of getting ahead is getting started',
-    ru: 'секрет того чтобы преуспевать в том чтобы начинать (Mark Twain)',
-  },
-  {
-    en: 'be yourself. everyone else is already taken',
-    ru: 'будь собой. все остальные уже заняты (Oscar Wilde)',
-  },
-  {
-    en: 'always forgive your enemies. nothing annoys them so much',
-    ru: 'всегда прощай своих врагов. ничто их так не раздражает',
-  },
-];
-
 class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sentences: shuffle(this.props.sentences),
+      sentences: [],
       currentSentenceIndex: 0,
       score: 3,
     }
     this.handleNext = this.handleNext.bind(this);
     this.handleMiss = this.handleMiss.bind(this);
+  }
+  componentDidMount() {
+    fetch(this.props.getSentencesUrl)
+      .then(r => r.json())
+      .then(sentences =>
+        this.setState({ sentences: shuffle(sentences) })
+      );
   }
   handleNext() {
     this.setState({
@@ -151,7 +66,11 @@ class Game extends React.Component {
   }
   render() {
     const {sentences, currentSentenceIndex, score} = this.state;
-    
+
+    if (sentences.length === 0) {
+      return <div>Loading...</div>;
+    }
+
     if (currentSentenceIndex === sentences.length) {
       return <Score score={score} large={true} />
     }
@@ -159,8 +78,8 @@ class Game extends React.Component {
     return (
       <div>
         <Score score={score} large={false} />
-        <Puzzle key={currentSentenceIndex} 
-          sentence={sentences[currentSentenceIndex]} 
+        <Puzzle key={currentSentenceIndex}
+          sentence={sentences[currentSentenceIndex]}
           onNext={this.handleNext}
           onMiss={this.handleMiss} />
       </div>
@@ -216,16 +135,16 @@ class Puzzle extends React.Component {
         <div className="words">
         {availableWords.map(
           (w, i) => {
-            const index = usedWordsToHide.indexOf(w);            
+            const index = usedWordsToHide.indexOf(w);
             const style = index === -1 ? {} : { visibility: 'hidden' };
             if (index !== -1) {
               usedWordsToHide.splice(index, 1);
-            }            
+            }
             const onClick = this.handleWordClick.bind(this, w);
             return <button className="word" key={i} onClick={onClick} style={style}>{w}</button>;
           }
-        )}  
-        </div>      
+        )}
+        </div>
         <p className="sentence">
           &nbsp;{usedWords.map((w, i) => <span key={i}>{w} </span>)}
           {expectedWords.length === nextWordIndex && <button onClick={this.handleNextClick}>next</button>}
@@ -236,7 +155,7 @@ class Puzzle extends React.Component {
 }
 
 ReactDOM.render(
-  <Game sentences={sentences} />,
+  <Game getSentencesUrl={'https://ru-to-en-sentences-ljitm75u3177.runkit.sh/'} />,
   document.getElementById('root')
 );
 
