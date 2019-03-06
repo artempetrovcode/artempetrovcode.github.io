@@ -45,6 +45,7 @@ class Game extends React.Component {
     }
     this.handleNext = this.handleNext.bind(this);
     this.handleMiss = this.handleMiss.bind(this);
+    this.handleSkip = this.handleSkip.bind(this);
   }
   componentDidMount() {
     fetch(this.props.getSentencesUrl)
@@ -59,9 +60,15 @@ class Game extends React.Component {
       score: this.state.score + 1,
     });
   }
+  handleSkip() {
+    this.setState({
+      currentSentenceIndex: this.state.currentSentenceIndex + 1,
+      score: Math.max(1, this.state.score - 1),
+    });
+  }
   handleMiss() {
     this.setState({
-      score: this.state.score - 1,
+      score: Math.max(1, this.state.score - 1),
     });
   }
   render() {
@@ -80,7 +87,7 @@ class Game extends React.Component {
         <Score score={score} large={false} />
         <Puzzle key={currentSentenceIndex}
           sentence={sentences[currentSentenceIndex]}
-          onSkip={this.handleNext}
+          onSkip={this.handleSkip}
           onNext={this.handleNext}
           onMiss={this.handleMiss} />
       </div>
@@ -111,10 +118,18 @@ class Puzzle extends React.Component {
     }
     this.handleNextClick = this.handleNextClick.bind(this);
     this.handleSkipClick = this.handleSkipClick.bind(this);
+
+    this.nextTimer = null;
   }
   handleWordClick(word) {
-    if (this.state.expectedWords[this.state.nextWordIndex] === word) {
-      this.setState({ nextWordIndex: this.state.nextWordIndex + 1 });
+    const {nextWordIndex, expectedWords} = this.state;
+    if (expectedWords[nextWordIndex] === word) {
+      this.setState({ nextWordIndex: nextWordIndex + 1 });
+      if (expectedWords.length === nextWordIndex + 1) {
+        this.nextTimer = setTimeout(() => {
+          this.props.onNext();
+        }, 500);
+      }
     } else {
       this.props.onMiss();
     }
@@ -122,6 +137,7 @@ class Puzzle extends React.Component {
   handleNextClick() {
     const {nextWordIndex, expectedWords} = this.state;
     if (expectedWords.length === nextWordIndex) {
+      clearTimeout(this.nextTimer);
       this.props.onNext();
     }
   }
