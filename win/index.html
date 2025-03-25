@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rainbow Shop</title>
+    <script>
+      async function encrypt(objectToEncrypt, stringKey) {
+        const stringInput = JSON.stringify(objectToEncrypt);
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(stringKey),
+          { name: "AES-GCM" },
+          false,
+          ["encrypt"]
+        );
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt(
+          { name: "AES-GCM", iv: iv },
+          key,
+          encoder.encode(stringInput)
+        );
+        return JSON.stringify({
+          iv: Array.from(iv),
+          data: Array.from(new Uint8Array(encrypted)),
+        });
+      }
+
+      async function decrypt(encryptedJSON, stringKey) {
+        const encryptedData = JSON.parse(encryptedJSON);
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(stringKey),
+          { name: "AES-GCM" },
+          false,
+          ["decrypt"]
+        );
+        const iv = new Uint8Array(encryptedData.iv);
+        const data = new Uint8Array(encryptedData.data);
+        const decrypted = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: iv },
+          key,
+          data
+        );
+        const decoder = new TextDecoder();
+        return JSON.parse(decoder.decode(decrypted));
+      }
+
+      window.onload = () => {
+        const encString =
+          '{"iv":[53,13,214,31,219,111,239,15,78,148,195,2],"data":[151,43,116,63,229,129,208,21,207,193,242,197,14,39,10,130,147,0,152,237,12,19,203,193,197,245,136,59,151,138,31,46,227,82,146,13,79,83,206,22,227,59,229,21,127,130,35,156,170,47,189,40,140,178,156,33,68,97,64,10,59,113,180,140,212,111,225,65,244,79,89,197,22,101,90,11,158,18,175,4,213,24,201,58,176,42,25,125,94,64,63,71,107]}';
+        let card = null;
+        document.getElementById("logbuton").onclick = async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          if (email.length === 0) {
+            return;
+          }
+          const key = new Array(4).join(password).slice(0, 16);
+          try {
+            card = await decrypt(encString, key);
+          } catch (e) {
+            console.log(e);
+            return;
+          }
+          if (password !== "o") {
+            return;
+          }
+          document.getElementById("login").style.display = "none";
+          document.getElementById("checkout").style.display = "flex";
+        };
+
+        // handler for the checkout button
+        document.getElementById("checkoutbtn").onclick = (e) => {
+          const cc = document.getElementById("cc").value;
+          const name = document.getElementById("name").value;
+          const date = document.getElementById("date").value;
+          const ccv = document.getElementById("ccv").value;
+          console.log({
+            cc,
+            name,
+            date,
+            ccv,
+          });
+          if (
+            cc.length === 0 ||
+            name.length === 0 ||
+            date.length === 0 ||
+            ccv.length === 0
+          ) {
+            return;
+          }
+          if (name.toLowerCase() !== card.name.toLocaleLowerCase()) {
+            return;
+          }
+          if (
+            cc.replace(" ", "").trim() !== card.number ||
+            date.replace(" ", "").trim() !== card.date ||
+            ccv.replace(" ", "").trim() !== card.ccv
+          ) {
+            return;
+          }
+
+          document.getElementById("checkout").style.display = "none";
+          document.getElementById("win").style.display = "flex";
+        };
+      };
+    </script>
+    <style>
+      .bg {
+        background: linear-gradient(
+          45deg,
+          #f00,
+          #ff0,
+          #0f0,
+          #0ff,
+          #00f,
+          #f0f,
+          #f00
+        );
+        background-size: 1400% 1400%;
+        animation: animate-backgrond-position 12s ease infinite;
+      }
+
+      @keyframes animate-backgrond-position {
+        0% {
+          background-position: 100% 0%;
+        }
+        50% {
+          background-position: 0% 100%;
+        }
+        100% {
+          background-position: 100% 0%;
+        }
+      }
+
+      .inp {
+        border: 0 none;
+        outline: 0 none !important;
+        padding: 10px;
+        margin-top: -5px;
+      }
+      .button {
+        margin-top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: sans-serif;
+      "
+    >
+      <div
+        id="login"
+        class="bg"
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 50px;
+          border-radius: 0px;
+          font-size: 14px;
+        "
+      >
+        <label for="email">Any Email</label>
+        <input
+          class="inp"
+          type="email"
+          id="email"
+          name="email"
+          required
+          style="flex: 1"
+          value="any@example.com"
+        />
+        <label for="password">Origami Password</label>
+        <input
+          class="inp"
+          type="password"
+          id="password"
+          name="password"
+          required
+          style="flex: 1"
+        />
+        <input
+          class="inp button"
+          type="submit"
+          value="Enter"
+          style="width: 50%"
+          id="logbuton"
+        />
+      </div>
+
+      <div
+        class="bg"
+        id="checkout"
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 50px;
+          border-radius: 0px;
+          font-size: 14px;
+          display: none;
+        "
+      >
+        <label for="cc">Card Number</label>
+        <input class="inp" id="cc" name="cc" required style="flex: 1" />
+        <label for="name">Name on Card</label>
+        <input class="inp" id="name" name="name" required style="flex: 1" />
+        <div style="flex: 1; display: flex; gap: 10px">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <label for="date">Expiry</label>
+            <input class="inp" id="date" name="date" required />
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <label for="ccv">CCV</label>
+            <input class="inp" type="password" id="ccv" name="ccv" required />
+          </div>
+        </div>
+
+        <input
+          class="inp button"
+          value="Checkout"
+          type="button"
+          style="width: 30%"
+          id="checkoutbtn"
+        />
+      </div>
+
+      <div
+        id="win"
+        class="bg"
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 50px;
+          border-radius: 0px;
+          font-size: 14px;
+          display: none;
+        "
+      >
+        Win
+      </div>
+    </div>
+  </body>
+</html>
