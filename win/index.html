@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rainbow Shop</title>
+    <link rel=”icon” href=”favicon.ico” type=”image/x-icon”>
+
     <script>
       async function encrypt(objectToEncrypt, stringKey) {
         const stringInput = JSON.stringify(objectToEncrypt);
@@ -145,8 +147,9 @@
       }
     </style>
   </head>
-  <body>
+  <body style="margin: 0">
     <div
+      class="bg"
       style="
         display: flex;
         justify-content: center;
@@ -157,7 +160,6 @@
     >
       <div
         id="login"
-        class="bg"
         style="
           display: flex;
           flex-direction: column;
@@ -196,7 +198,6 @@
       </div>
 
       <div
-        class="bg"
         id="checkout"
         style="
           display: flex;
@@ -234,7 +235,6 @@
 
       <div
         id="win"
-        class="bg"
         style="
           display: flex;
           flex-direction: column;
