@@ -100,9 +100,9 @@
             return;
           }
           if (
-            cc.replace(" ", "").trim() !== card.number ||
-            date.replace(" ", "").trim() !== card.date ||
-            ccv.replace(" ", "").trim() !== card.ccv
+            cc.replace(/\s/g, "").trim() != card.number ||
+            date.replace(/\s/g, "").trim() !== card.date ||
+            ccv.replace(/\s/g, "").trim() != card.ccv
           ) {
             return;
           }
@@ -151,8 +151,8 @@
       }
       .winbox {
         position: relative;
-        width: 405px;
-        height: 402px;
+        width: 100%;
+        aspect-ratio: 405 / 402;
       }
       .winbox img {
         position: absolute;
@@ -203,9 +203,10 @@
           display: flex;
           flex-direction: column;
           gap: 10px;
-          padding: 50px;
           border-radius: 0px;
           font-size: 14px;
+          flex: 1;
+          padding: 50px;
         "
       >
         <label for="email">Any Email</label>
@@ -242,7 +243,6 @@
           display: flex;
           flex-direction: column;
           gap: 10px;
-          padding: 50px;
           border-radius: 0px;
           font-size: 14px;
           display: none;
@@ -253,11 +253,15 @@
         <label for="name">Name on Card</label>
         <input class="inp" id="name" name="name" required style="flex: 1" />
         <div style="flex: 1; display: flex; gap: 10px">
-          <div style="display: flex; flex-direction: column; gap: 10px">
+          <div
+            style="display: flex; flex-direction: column; gap: 10px; flex: 1"
+          >
             <label for="date">Expiry</label>
             <input class="inp" id="date" name="date" required />
           </div>
-          <div style="display: flex; flex-direction: column; gap: 10px">
+          <div
+            style="display: flex; flex-direction: column; gap: 10px; flex: 1"
+          >
             <label for="ccv">CCV</label>
             <input class="inp" type="password" id="ccv" name="ccv" required />
           </div>
@@ -275,11 +279,11 @@
       <div
         id="win"
         style="
-          display: flex;
-          flex-direction: column;
           border-radius: 0px;
           font-size: 14px;
           display: none;
+          flex: 1;
+          padding: 10px;
         "
       >
         <div class="winbox">
