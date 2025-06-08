@@ -197,7 +197,6 @@ async function dispatch(action) {
     case 'start': {
       const code = prompt('Enter code');
       state.unsorted = await decrypt(defaultStateUnsortedEncrypted, code);
-      state.unsorted = state.unsorted.slice(0, 10)
       state.sorted.push(state.unsorted.pop()); // move first item
       setLeftRightMid(state);
       break;
