@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sort</title>
+    <style>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  /* height: 90vh; */
+  position: relative;
+}
+.debug {
+  display: none;
+ font-family: monospace;
+}
+.container {
+    position: fixed;
+    bottom: 30px;
+    width: 100%;
+}
+.current, .other, .left, .start {
+  width: 90%;
+  margin-left: 5%;
+  margin-right: 5%;
+  display: block;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.current, .other, .start {
+  padding: 20px;
+  background: lightblue;
+  border: 0 none;
+  font-size: 1.5em;
+  border-radius: 5px;
+  color: white;
+  
+}
+.current:hover, .other:hover, .start:hover {
+  opacity: 0.8
+}
+.start {
+  background: lightgreen;
+}
+.undo, .startOver {
+  background: white;
+  border: 0 none;
+  padding: 15px;
+  padding-bottom: 0;
+}
+.footer {
+  display: flex;
+  position: fixed;
+  bottom: 10px;
+  justify-content: space-between;
+  width: 100%;
+}
+    </style>
+    <script>
+window.onload = function() {
+
+    async function decrypt(encryptedJSON, stringKey) {
+  const encryptedData = JSON.parse(encryptedJSON);
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(stringKey),
+    { name: "AES-GCM" },
+    false,
+    ["decrypt"]
+  );
+  const iv = new Uint8Array(encryptedData.iv);
+  const data = new Uint8Array(encryptedData.data);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: iv },
+    key,
+    data
+  );
+  const decoder = new TextDecoder();
+  return JSON.parse(decoder.decode(decrypted));
+}
+function el(tag, cls, text) {
+  const elem = document.createElement(tag);
+  elem.classList.add(cls);
+  if (text) elem.innerText = text;
+  return elem;
+}
+function nameToColor(name) {
+  const sum = name.split('').map(c => c.charCodeAt(0)).reduce((a, b) => a + b, 0);
+  const value = sum ** 4;
+  const hex = value.toString(16).substr(0, 4);
+  const prefix = new Array(4 - hex.length + 1).join('f');
+  return '#0' + prefix + hex + '0';
+  
+}
+function render(state, dispatch) {
+  document.body.innerHTML = '';
+  const debug = el('div', 'debug', JSON.stringify({ state, history }))
+  document.body.appendChild(debug);
+  
+  if (state.unsorted.length === 0 && state.current === null) {
+    const done = el('ol', 'done');
+    for (const value of state.sorted) {
+      const item = el('li', 'item', value);
+      done.appendChild(item);
+    }
+    document.body.appendChild(done);
+  } else if (state.sorted.length === 0) {
+    const start = el('button', 'start', 'Start');        
+    start.onclick = () => dispatch('start')
+    document.body.appendChild(start);
+  } else {
+    const container = el('div', 'container');
+    const left = el('div', 'left', `${state.unsorted.length + 1} left`);
+    container.appendChild(left);
+    const current = el('button', 'current', state.current);
+    current.onclick = () => dispatch('current_better')
+    current.style.backgroundColor = nameToColor(state.current);
+    container.appendChild(current);
+    const other = el('button', 'other', state.mid);
+    other.style.backgroundColor = nameToColor(state.mid);
+    other.onclick = () => dispatch('mid_better')
+    container.appendChild(other);
+    document.body.appendChild(container);
+  }
+  const footer = el('footer', 'footer');
+  const undo = el('button', 'undo', 'undo');
+  undo.onclick = () => dispatch('undo')
+  footer.appendChild(undo);
+  const startOver = el('button', 'startOver', 'start over')
+  startOver.onclick = () => dispatch('start_over');
+  footer.appendChild(startOver);
+  document.body.appendChild(footer);
+}
+const defaultStateUnsortedEncrypted = '{"iv":[28,46,229,129,239,44,68,58,52,242,160,32],"data":[48,190,131,73,2,78,228,231,248,250,73,113,21,219,69,97,209,7,180,134,45,120,37,162,58,3,39,5,202,102,97,216,61,87,143,190,208,125,55,226,81,166,126,40,203,69,166,151,62,21,130,38,188,218,4,185,153,183,76,151,158,233,34,114,50,72,170,222,134,41,226,88,118,243,108,161,229,119,75,68,115,32,201,86,219,121,207,84,173,180,63,148,1,59,142,103,38,236,105,86,251,163,24,143,167,241,254,19,234,49,140,134,101,105,105,53,150,122,93,157,7,142,184,58,255,229,139,173,230,231,168,143,160,112,154,15,215,40,65,125,1,13,79,203,76,90,240,134,216,168,11,106,54,130,26,20,24,58,161,110,29,73,28,29,109,232,34,154,95,237,224,144,126,46,134,159,182,189,114,174,126,230,127,107,225,203,197,51,223,45,159,65,31,242,101,236,50,84,218,93,128,65,126,190,28,65,235,97,170,163,216,28,163,21,5,246,251,5,214,202,142,151,15,94,200,207,184,153,213,195,168,0,84,65,97,124,141,232,185,242,116,44,249,219,236,120,145,21,142,39,48,143,174,202,34,198,180,44,24,203,76,251,192,255,25,9,128,28,76,156,175,60,235,125,121,224,113,111,219,226,192,214,181,146,71,37,34,234,240,167,254,20,0,102,93,215,49,70,188,86,156,27,39,252,152,43,130,88,65,86,78,143,20,88,50,241,220,35,60,9,131,197,65,160,251,74,35,146,3,181,25,126,31,73,220,48,154,56,3,69,61,233,155,222,231,103,212,149,130,6,173,120,143,70,135,127,104,140,206,115,201,60,53,212,121,248,81,225,124,196,236,217,107,55,55,6,67,93,47,250,90,232,90,112,221,203,217,143,31,33,127,133,67,132,11,232,91,72,188,179,34,156,105,13,64,181,246,99,108,235,130,194,124,145,29,92,128,91,253]}';
+const defaultState = {
+  unsorted: ['default'],
+  sorted: [],
+  current: null,
+  left: null,
+  right: null,
+  mid: null,
+}
+
+const version = 32;
+function readState() {
+  const fromStorage = localStorage.getItem('state' + version);
+  if (fromStorage) return JSON.parse(fromStorage);
+  return null;
+}
+const history = [];
+function saveState(state) {
+  const json = JSON.stringify(state);
+  localStorage.setItem('state' + version, json);
+}
+let state = readState() || JSON.parse(JSON.stringify(defaultState));
+function insert(ar, pos, val) {
+  if (pos === ar.length) {
+    ar.push(val);
+  } else {
+    ar.splice(pos, 1, val, ar[pos])
+  }
+  return ar;
+}
+function setLeftRightMid(state) {
+  if (state.unsorted.length) {
+    state.current = state.unsorted.pop();
+    state.left = 0;
+    state.right = state.sorted.length - 1; 
+    state.mid = state.sorted[Math.floor((state.right + state.left) / 2)];
+  } else {
+    state.current = null;
+    state.left = null;
+    state.right = null;
+    state.mid = null;
+  }
+  return state;
+}
+async function dispatch(action) {
+  if (action !== 'undo') {
+    const json = JSON.stringify(state);
+    history.push(json);
+  }
+  switch (action) {
+    case 'start_over': {
+      state = JSON.parse(JSON.stringify(defaultState));
+      break;
+    }
+    case 'undo': {
+      if (history.length) {
+        state = JSON.parse(history.pop());
+      }
+      break;
+    }
+    case 'start': {
+      const code = prompt('Enter code');
+      state.unsorted = await decrypt(defaultStateUnsortedEncrypted, code);
+      state.unsorted = state.unsorted.slice(0, 10)
+      state.sorted.push(state.unsorted.pop()); // move first item
+      setLeftRightMid(state);
+      break;
+    }
+    case 'current_better': {
+      state.right = state.sorted.indexOf(state.mid) - 1;
+      if (state.left > state.right) {
+        // insert into left
+        state.sorted = insert(state.sorted, state.left, state.current);
+        setLeftRightMid(state);
+      } else {
+        state.mid = state.sorted[Math.floor((state.right + state.left) / 2)];
+      }
+      break;
+    }
+    case 'mid_better': {
+      state.left = state.sorted.indexOf(state.mid) + 1;
+      if (state.left > state.right) {
+        // insert into left
+        state.sorted = insert(state.sorted, state.left, state.current);
+        setLeftRightMid(state);
+      } else {
+        state.mid = state.sorted[Math.floor((state.right + state.left) / 2)];
+      }
+      break;
+    }
+  }
+  saveState(state);
+  render(state, dispatch);
+}
+render(state, dispatch);
+
+}
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
